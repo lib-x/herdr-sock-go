@@ -14,7 +14,7 @@ import (
 
 const (
 	// CurrentProtocol is the Herdr socket API protocol version in the
-	// Herdr 0.7.2 source used for this package.
+	// Herdr 0.7.3 source used for this package.
 	CurrentProtocol uint32 = 16
 
 	defaultTimeout = 30 * time.Second

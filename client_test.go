@@ -76,7 +76,7 @@ func TestCallRawSuccess(t *testing.T) {
 		if !ok || len(params) != 0 {
 			t.Fatalf("params = %#v, want empty object", request["params"])
 		}
-		writeLine(t, w, `{"id":"req_1","result":{"type":"pong","version":"0.7.2","protocol":16,"capabilities":{"live_handoff":true,"detached_server_daemon":true}}}`)
+		writeLine(t, w, `{"id":"req_1","result":{"type":"pong","version":"0.7.3","protocol":16,"capabilities":{"live_handoff":true,"detached_server_daemon":true}}}`)
 	})
 
 	client := MustNew(WithSocketPath(socket), WithTimeout(time.Second))
@@ -84,7 +84,7 @@ func TestCallRawSuccess(t *testing.T) {
 	if err := client.Call(context.Background(), "req_1", MethodPing, nil, &pong); err != nil {
 		t.Fatal(err)
 	}
-	if pong.Protocol != CurrentProtocol || pong.Version != "0.7.2" || pong.Capabilities == nil || !pong.Capabilities.DetachedServerDaemon {
+	if pong.Protocol != CurrentProtocol || pong.Version != "0.7.3" || pong.Capabilities == nil || !pong.Capabilities.DetachedServerDaemon {
 		t.Fatalf("pong = %#v", pong)
 	}
 }
@@ -230,7 +230,7 @@ func TestSessionSnapshot(t *testing.T) {
 			t.Fatalf("method = %v", request["method"])
 		}
 		id, _ := request["id"].(string)
-		writeLine(t, w, `{"id":"`+id+`","result":{"type":"session_snapshot","snapshot":{"version":"0.7.2","protocol":16,"focused_workspace_id":"w1","focused_tab_id":"w1:t1","focused_pane_id":"w1:p1","workspaces":[],"tabs":[],"panes":[],"layouts":[],"agents":[]}}}`)
+		writeLine(t, w, `{"id":"`+id+`","result":{"type":"session_snapshot","snapshot":{"version":"0.7.3","protocol":16,"focused_workspace_id":"w1","focused_tab_id":"w1:t1","focused_pane_id":"w1:p1","workspaces":[],"tabs":[],"panes":[],"layouts":[],"agents":[]}}}`)
 	})
 
 	client := MustNew(WithSocketPath(socket), WithTimeout(time.Second))
