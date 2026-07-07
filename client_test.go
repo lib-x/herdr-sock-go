@@ -76,7 +76,7 @@ func TestCallRawSuccess(t *testing.T) {
 		if !ok || len(params) != 0 {
 			t.Fatalf("params = %#v, want empty object", request["params"])
 		}
-		writeLine(t, w, `{"id":"req_1","result":{"type":"pong","version":"0.7.0","protocol":14,"capabilities":{"live_handoff":true}}}`)
+		writeLine(t, w, `{"id":"req_1","result":{"type":"pong","version":"0.7.2","protocol":16,"capabilities":{"live_handoff":true,"detached_server_daemon":true}}}`)
 	})
 
 	client := MustNew(WithSocketPath(socket), WithTimeout(time.Second))
@@ -84,7 +84,7 @@ func TestCallRawSuccess(t *testing.T) {
 	if err := client.Call(context.Background(), "req_1", MethodPing, nil, &pong); err != nil {
 		t.Fatal(err)
 	}
-	if pong.Protocol != CurrentProtocol || pong.Version != "0.7.0" {
+	if pong.Protocol != CurrentProtocol || pong.Version != "0.7.2" || pong.Capabilities == nil || !pong.Capabilities.DetachedServerDaemon {
 		t.Fatalf("pong = %#v", pong)
 	}
 }
@@ -190,6 +190,232 @@ func TestSubscribeReadsEvents(t *testing.T) {
 	if data.PaneID != "w1:p1" || data.AgentStatus != AgentStatusDone {
 		t.Fatalf("data = %#v", data)
 	}
+}
+
+func TestWorktreeSubscriptionHelpers(t *testing.T) {
+	tests := []struct {
+		name string
+		sub  Subscription
+		want string
+	}{
+		{name: "workspace moved", sub: SubscribeWorkspaceMoved(), want: "workspace.moved"},
+		{name: "created", sub: SubscribeWorktreeCreated(), want: "worktree.created"},
+		{name: "opened", sub: SubscribeWorktreeOpened(), want: "worktree.opened"},
+		{name: "removed", sub: SubscribeWorktreeRemoved(), want: "worktree.removed"},
+		{name: "tab created", sub: SubscribeTabCreated(), want: "tab.created"},
+		{name: "tab closed", sub: SubscribeTabClosed(), want: "tab.closed"},
+		{name: "tab focused", sub: SubscribeTabFocused(), want: "tab.focused"},
+		{name: "tab renamed", sub: SubscribeTabRenamed(), want: "tab.renamed"},
+		{name: "tab moved", sub: SubscribeTabMoved(), want: "tab.moved"},
+		{name: "layout updated", sub: SubscribeLayoutUpdated(), want: "layout.updated"},
+		{name: "pane scroll changed", sub: SubscribePaneScrollChanged("w1:p1"), want: "pane.scroll_changed"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := tt.sub["type"].(string)
+			if !ok || got != tt.want {
+				t.Fatalf("subscription type = %#v, want %q", tt.sub["type"], tt.want)
+			}
+		})
+	}
+}
+
+func TestSessionSnapshot(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix socket test")
+	}
+	socket := startUnixJSONServer(t, func(t *testing.T, request map[string]any, w *bufio.Writer) {
+		if request["method"] != MethodSessionSnapshot {
+			t.Fatalf("method = %v", request["method"])
+		}
+		id, _ := request["id"].(string)
+		writeLine(t, w, `{"id":"`+id+`","result":{"type":"session_snapshot","snapshot":{"version":"0.7.2","protocol":16,"focused_workspace_id":"w1","focused_tab_id":"w1:t1","focused_pane_id":"w1:p1","workspaces":[],"tabs":[],"panes":[],"layouts":[],"agents":[]}}}`)
+	})
+
+	client := MustNew(WithSocketPath(socket), WithTimeout(time.Second))
+	snapshot, err := client.SessionSnapshot(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Protocol != CurrentProtocol || snapshot.FocusedPaneID == nil || *snapshot.FocusedPaneID != "w1:p1" {
+		t.Fatalf("snapshot = %#v", snapshot)
+	}
+}
+
+func TestCreateWorktreeSendsParams(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix socket test")
+	}
+	socket := startUnixJSONServer(t, func(t *testing.T, request map[string]any, w *bufio.Writer) {
+		if request["method"] != MethodWorktreeCreate {
+			t.Fatalf("method = %v", request["method"])
+		}
+		params, ok := request["params"].(map[string]any)
+		if !ok {
+			t.Fatalf("params = %#v", request["params"])
+		}
+		if params["branch"] != "feature/api" || params["focus"] != true {
+			t.Fatalf("params = %#v", params)
+		}
+		id, _ := request["id"].(string)
+		writeLine(t, w, `{"id":"`+id+`","result":{"type":"worktree_created","workspace":{"workspace_id":"w2","number":2,"label":"feature","focused":true,"pane_count":1,"tab_count":1,"active_tab_id":"w2:t1","agent_status":"unknown"},"tab":{"tab_id":"w2:t1","workspace_id":"w2","number":1,"label":"1","focused":true,"pane_count":1,"agent_status":"unknown"},"root_pane":{"pane_id":"w2:p1","terminal_id":"term2","workspace_id":"w2","tab_id":"w2:t1","focused":true,"agent_status":"unknown","revision":1},"worktree":{"path":"/repo/herdr-feature","branch":"feature/api","is_bare":false,"is_detached":false,"is_prunable":false,"is_linked_worktree":true,"label":"herdr"}}}`)
+	})
+
+	branch := "feature/api"
+	client := MustNew(WithSocketPath(socket), WithTimeout(time.Second))
+	workspace, _, _, worktree, err := client.CreateWorktree(context.Background(), WorktreeCreateParams{
+		Branch: &branch,
+		Focus:  true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if workspace.WorkspaceID != "w2" || worktree.Branch == nil || *worktree.Branch != branch {
+		t.Fatalf("workspace = %#v, worktree = %#v", workspace, worktree)
+	}
+}
+
+func TestSetSplitRatio(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix socket test")
+	}
+	socket := startUnixJSONServer(t, func(t *testing.T, request map[string]any, w *bufio.Writer) {
+		if request["method"] != MethodLayoutSetSplitRatio {
+			t.Fatalf("method = %v", request["method"])
+		}
+		params, ok := request["params"].(map[string]any)
+		if !ok {
+			t.Fatalf("params = %#v", request["params"])
+		}
+		if params["ratio"] != 0.6 {
+			t.Fatalf("ratio = %#v", params["ratio"])
+		}
+		id, _ := request["id"].(string)
+		writeLine(t, w, `{"id":"`+id+`","result":{"type":"layout_split_ratio_set","layout":{"workspace_id":"w1","tab_id":"w1:t1","zoomed":false,"focused_pane_id":"w1:p1","root":{"type":"split","direction":"right","ratio":0.6,"first":{"type":"pane","pane_id":"w1:p1"},"second":{"type":"pane","pane_id":"w1:p2"}}}}}`)
+	})
+
+	client := MustNew(WithSocketPath(socket), WithTimeout(time.Second))
+	layout, err := client.SetSplitRatio(context.Background(), LayoutSetSplitRatioParams{
+		TabID: stringPtr("w1:t1"),
+		Path:  []bool{},
+		Ratio: 0.6,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if layout.Root.Ratio == nil || *layout.Root.Ratio != 0.6 {
+		t.Fatalf("layout = %#v", layout)
+	}
+}
+
+func TestDecodeWorktreeRemovedEventWithWorkspaceSnapshot(t *testing.T) {
+	line := []byte(`{
+		"event":"worktree_removed",
+		"data":{
+			"type":"worktree_removed",
+			"workspace_id":"w2",
+			"workspace":{
+				"workspace_id":"w2",
+				"number":2,
+				"label":"feature",
+				"focused":false,
+				"pane_count":1,
+				"tab_count":1,
+				"active_tab_id":"w2:t1",
+				"agent_status":"unknown"
+			},
+			"worktree":{
+				"path":"/repo/herdr-feature",
+				"branch":"feature/api",
+				"is_bare":false,
+				"is_detached":false,
+				"is_prunable":false,
+				"is_linked_worktree":true,
+				"label":"herdr"
+			},
+			"forced":true
+		}
+	}`)
+
+	var event SubscriptionEvent
+	if err := json.Unmarshal(line, &event); err != nil {
+		t.Fatal(err)
+	}
+	var data WorktreeRemovedEvent
+	if err := json.Unmarshal(event.Data, &data); err != nil {
+		t.Fatal(err)
+	}
+
+	if event.Event != "worktree_removed" {
+		t.Fatalf("event = %q", event.Event)
+	}
+	if data.Type != "worktree_removed" || data.WorkspaceID != "w2" || !data.Forced {
+		t.Fatalf("data = %#v", data)
+	}
+	if data.Workspace == nil || data.Workspace.WorkspaceID != "w2" {
+		t.Fatalf("workspace snapshot = %#v", data.Workspace)
+	}
+	if data.Worktree.Branch == nil || *data.Worktree.Branch != "feature/api" {
+		t.Fatalf("worktree = %#v", data.Worktree)
+	}
+}
+
+func TestDecodePaneScrollAndLayoutEvents(t *testing.T) {
+	scrollLine := []byte(`{
+		"event":"pane.scroll_changed",
+		"data":{
+			"pane_id":"w1:p1",
+			"workspace_id":"w1",
+			"scroll":{
+				"offset_from_bottom":12,
+				"max_offset_from_bottom":240,
+				"viewport_rows":30
+			}
+		}
+	}`)
+	var scrollEvent SubscriptionEvent
+	if err := json.Unmarshal(scrollLine, &scrollEvent); err != nil {
+		t.Fatal(err)
+	}
+	var scrollData PaneScrollChangedEvent
+	if err := json.Unmarshal(scrollEvent.Data, &scrollData); err != nil {
+		t.Fatal(err)
+	}
+	if scrollData.Scroll.OffsetFromBottom != 12 || scrollData.Scroll.ViewportRows != 30 {
+		t.Fatalf("scroll data = %#v", scrollData)
+	}
+
+	layoutLine := []byte(`{
+		"event":"layout_updated",
+		"data":{
+			"type":"layout_updated",
+			"layout":{
+				"workspace_id":"w1",
+				"tab_id":"w1:t1",
+				"zoomed":false,
+				"area":{"x":0,"y":0,"width":100,"height":24},
+				"focused_pane_id":"w1:p1",
+				"panes":[{"pane_id":"w1:p1","focused":true,"rect":{"x":0,"y":0,"width":100,"height":24}}],
+				"splits":[]
+			}
+		}
+	}`)
+	var layoutEvent SubscriptionEvent
+	if err := json.Unmarshal(layoutLine, &layoutEvent); err != nil {
+		t.Fatal(err)
+	}
+	var layoutData LayoutUpdatedEvent
+	if err := json.Unmarshal(layoutEvent.Data, &layoutData); err != nil {
+		t.Fatal(err)
+	}
+	if layoutData.Type != "layout_updated" || layoutData.Layout.TabID != "w1:t1" {
+		t.Fatalf("layout data = %#v", layoutData)
+	}
+}
+
+func stringPtr(value string) *string {
+	return &value
 }
 
 func startUnixJSONServer(t *testing.T, handle func(*testing.T, map[string]any, *bufio.Writer)) string {

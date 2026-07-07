@@ -16,6 +16,40 @@ type WorkspaceRenameParams struct {
 	Label       string `json:"label"`
 }
 
+type WorkspaceMoveParams struct {
+	WorkspaceID string `json:"workspace_id"`
+	InsertIndex int    `json:"insert_index"`
+}
+
+type WorktreeListParams struct {
+	WorkspaceID *string `json:"workspace_id,omitempty"`
+	CWD         *string `json:"cwd,omitempty"`
+}
+
+type WorktreeCreateParams struct {
+	WorkspaceID *string `json:"workspace_id,omitempty"`
+	CWD         *string `json:"cwd,omitempty"`
+	Branch      *string `json:"branch,omitempty"`
+	Base        *string `json:"base,omitempty"`
+	Path        *string `json:"path,omitempty"`
+	Label       *string `json:"label,omitempty"`
+	Focus       bool    `json:"focus,omitempty"`
+}
+
+type WorktreeOpenParams struct {
+	WorkspaceID *string `json:"workspace_id,omitempty"`
+	CWD         *string `json:"cwd,omitempty"`
+	Path        *string `json:"path,omitempty"`
+	Branch      *string `json:"branch,omitempty"`
+	Label       *string `json:"label,omitempty"`
+	Focus       bool    `json:"focus,omitempty"`
+}
+
+type WorktreeRemoveParams struct {
+	WorkspaceID string `json:"workspace_id"`
+	Force       bool   `json:"force,omitempty"`
+}
+
 type TabCreateParams struct {
 	WorkspaceID *string           `json:"workspace_id,omitempty"`
 	CWD         *string           `json:"cwd,omitempty"`
@@ -35,6 +69,11 @@ type TabTarget struct {
 type TabRenameParams struct {
 	TabID string `json:"tab_id"`
 	Label string `json:"label"`
+}
+
+type TabMoveParams struct {
+	TabID       string `json:"tab_id"`
+	InsertIndex int    `json:"insert_index"`
 }
 
 type PaneSplitParams struct {
@@ -138,6 +177,13 @@ const (
 type PaneZoomParams struct {
 	PaneID *string      `json:"pane_id,omitempty"`
 	Mode   PaneZoomMode `json:"mode,omitempty"`
+}
+
+type LayoutSetSplitRatioParams struct {
+	TabID  *string `json:"tab_id,omitempty"`
+	PaneID *string `json:"pane_id,omitempty"`
+	Path   []bool  `json:"path"`
+	Ratio  float32 `json:"ratio"`
 }
 
 type AgentTarget struct {

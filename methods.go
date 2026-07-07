@@ -12,11 +12,14 @@ const (
 	MethodClientWindowTitleSet   = "client.window_title.set"
 	MethodClientWindowTitleClear = "client.window_title.clear"
 
+	MethodSessionSnapshot = "session.snapshot"
+
 	MethodWorkspaceCreate = "workspace.create"
 	MethodWorkspaceList   = "workspace.list"
 	MethodWorkspaceGet    = "workspace.get"
 	MethodWorkspaceFocus  = "workspace.focus"
 	MethodWorkspaceRename = "workspace.rename"
+	MethodWorkspaceMove   = "workspace.move"
 	MethodWorkspaceClose  = "workspace.close"
 
 	MethodWorktreeList   = "worktree.list"
@@ -29,6 +32,7 @@ const (
 	MethodTabGet    = "tab.get"
 	MethodTabFocus  = "tab.focus"
 	MethodTabRename = "tab.rename"
+	MethodTabMove   = "tab.move"
 	MethodTabClose  = "tab.close"
 
 	MethodPaneSplit               = "pane.split"
@@ -44,6 +48,7 @@ const (
 	MethodPaneList                = "pane.list"
 	MethodPaneCurrent             = "pane.current"
 	MethodPaneGet                 = "pane.get"
+	MethodPaneFocus               = "pane.focus"
 	MethodPaneRename              = "pane.rename"
 	MethodPaneSendText            = "pane.send_text"
 	MethodPaneSendKeys            = "pane.send_keys"
@@ -57,8 +62,9 @@ const (
 	MethodPaneClose               = "pane.close"
 	MethodPaneWaitForOutput       = "pane.wait_for_output"
 
-	MethodLayoutExport = "layout.export"
-	MethodLayoutApply  = "layout.apply"
+	MethodLayoutExport        = "layout.export"
+	MethodLayoutApply         = "layout.apply"
+	MethodLayoutSetSplitRatio = "layout.set_split_ratio"
 
 	MethodAgentList    = "agent.list"
 	MethodAgentGet     = "agent.get"

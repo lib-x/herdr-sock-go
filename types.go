@@ -59,7 +59,8 @@ type PongResult struct {
 }
 
 type ServerCapabilities struct {
-	LiveHandoff bool `json:"live_handoff"`
+	LiveHandoff          bool `json:"live_handoff"`
+	DetachedServerDaemon bool `json:"detached_server_daemon"`
 }
 
 type ConfigReloadResult struct {
@@ -121,7 +122,14 @@ type PaneInfo struct {
 	CustomStatus  *string           `json:"custom_status,omitempty"`
 	StateLabels   map[string]string `json:"state_labels,omitempty"`
 	AgentSession  *AgentSessionInfo `json:"agent_session,omitempty"`
+	Scroll        *PaneScrollInfo   `json:"scroll,omitempty"`
 	Revision      uint64            `json:"revision"`
+}
+
+type PaneScrollInfo struct {
+	OffsetFromBottom    uint64 `json:"offset_from_bottom"`
+	MaxOffsetFromBottom uint64 `json:"max_offset_from_bottom"`
+	ViewportRows        uint64 `json:"viewport_rows"`
 }
 
 type AgentInfo struct {
@@ -183,6 +191,43 @@ type PaneLayoutSplit struct {
 	Direction SplitDirection `json:"direction"`
 	Ratio     float32        `json:"ratio"`
 	Rect      PaneLayoutRect `json:"rect"`
+}
+
+type LayoutDescription struct {
+	WorkspaceID   string     `json:"workspace_id"`
+	TabID         string     `json:"tab_id"`
+	Zoomed        bool       `json:"zoomed"`
+	FocusedPaneID string     `json:"focused_pane_id"`
+	Root          LayoutNode `json:"root"`
+}
+
+// LayoutNode is Herdr's portable layout tree. For pane nodes, Type is "pane"
+// and pane fields are flattened onto the same object. For split nodes, Type is
+// "split" and Direction, Ratio, First, and Second describe the split.
+type LayoutNode struct {
+	Type      string            `json:"type"`
+	PaneID    *string           `json:"pane_id,omitempty"`
+	Label     *string           `json:"label,omitempty"`
+	CWD       *string           `json:"cwd,omitempty"`
+	Command   []string          `json:"command,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
+	Direction SplitDirection    `json:"direction,omitempty"`
+	Ratio     *float32          `json:"ratio,omitempty"`
+	First     *LayoutNode       `json:"first,omitempty"`
+	Second    *LayoutNode       `json:"second,omitempty"`
+}
+
+type SessionSnapshot struct {
+	Version            string               `json:"version"`
+	Protocol           uint32               `json:"protocol"`
+	FocusedWorkspaceID *string              `json:"focused_workspace_id,omitempty"`
+	FocusedTabID       *string              `json:"focused_tab_id,omitempty"`
+	FocusedPaneID      *string              `json:"focused_pane_id,omitempty"`
+	Workspaces         []WorkspaceInfo      `json:"workspaces"`
+	Tabs               []TabInfo            `json:"tabs"`
+	Panes              []PaneInfo           `json:"panes"`
+	Layouts            []PaneLayoutSnapshot `json:"layouts"`
+	Agents             []AgentInfo          `json:"agents"`
 }
 
 type WorktreeSourceInfo struct {

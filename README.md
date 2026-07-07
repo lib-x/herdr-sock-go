@@ -3,7 +3,7 @@
 Go client for Herdr's local socket API.
 
 This package speaks Herdr's newline-delimited JSON API over the local API
-socket. It is generated against Herdr 0.7.0 protocol `14`.
+socket. It is generated against Herdr 0.7.2 protocol `16`.
 
 ```go
 package main

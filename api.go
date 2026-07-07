@@ -19,6 +19,36 @@ type workspaceListResult struct {
 	Workspaces []WorkspaceInfo `json:"workspaces"`
 }
 
+type worktreeListResult struct {
+	Type      string             `json:"type"`
+	Source    WorktreeSourceInfo `json:"source"`
+	Worktrees []WorktreeInfo     `json:"worktrees"`
+}
+
+type worktreeCreatedResult struct {
+	Type      string        `json:"type"`
+	Workspace WorkspaceInfo `json:"workspace"`
+	Tab       TabInfo       `json:"tab"`
+	RootPane  PaneInfo      `json:"root_pane"`
+	Worktree  WorktreeInfo  `json:"worktree"`
+}
+
+type worktreeOpenedResult struct {
+	Type        string        `json:"type"`
+	Workspace   WorkspaceInfo `json:"workspace"`
+	Tab         TabInfo       `json:"tab"`
+	RootPane    PaneInfo      `json:"root_pane"`
+	Worktree    WorktreeInfo  `json:"worktree"`
+	AlreadyOpen bool          `json:"already_open"`
+}
+
+type WorktreeRemovedResult struct {
+	Type        string `json:"type"`
+	WorkspaceID string `json:"workspace_id"`
+	Path        string `json:"path"`
+	Forced      bool   `json:"forced"`
+}
+
 type tabInfoResult struct {
 	Type string  `json:"type"`
 	Tab  TabInfo `json:"tab"`
@@ -60,6 +90,11 @@ type paneLayoutResult struct {
 	Layout PaneLayoutSnapshot `json:"layout"`
 }
 
+type layoutDescriptionResult struct {
+	Type   string            `json:"type"`
+	Layout LayoutDescription `json:"layout"`
+}
+
 type agentInfoResult struct {
 	Type  string    `json:"type"`
 	Agent AgentInfo `json:"agent"`
@@ -80,6 +115,19 @@ type NotificationShowResult struct {
 	Type   string `json:"type"`
 	Shown  bool   `json:"shown"`
 	Reason string `json:"reason"`
+}
+
+type sessionSnapshotResult struct {
+	Type     string          `json:"type"`
+	Snapshot SessionSnapshot `json:"snapshot"`
+}
+
+func (c *Client) SessionSnapshot(ctx context.Context) (*SessionSnapshot, error) {
+	var out sessionSnapshotResult
+	if err := c.Call(ctx, "", MethodSessionSnapshot, EmptyParams{}, &out); err != nil {
+		return nil, err
+	}
+	return &out.Snapshot, nil
 }
 
 // CreateWorkspace creates a workspace and returns the workspace, first tab,
@@ -125,8 +173,49 @@ func (c *Client) RenameWorkspace(ctx context.Context, workspaceID, label string)
 	return &out.Workspace, nil
 }
 
+func (c *Client) MoveWorkspace(ctx context.Context, workspaceID string, insertIndex int) ([]WorkspaceInfo, error) {
+	var out workspaceListResult
+	params := WorkspaceMoveParams{WorkspaceID: workspaceID, InsertIndex: insertIndex}
+	if err := c.Call(ctx, "", MethodWorkspaceMove, params, &out); err != nil {
+		return nil, err
+	}
+	return out.Workspaces, nil
+}
+
 func (c *Client) CloseWorkspace(ctx context.Context, workspaceID string) error {
 	return c.Call(ctx, "", MethodWorkspaceClose, WorkspaceTarget{WorkspaceID: workspaceID}, nil)
+}
+
+func (c *Client) ListWorktrees(ctx context.Context, params WorktreeListParams) (*WorktreeSourceInfo, []WorktreeInfo, error) {
+	var out worktreeListResult
+	if err := c.Call(ctx, "", MethodWorktreeList, params, &out); err != nil {
+		return nil, nil, err
+	}
+	return &out.Source, out.Worktrees, nil
+}
+
+func (c *Client) CreateWorktree(ctx context.Context, params WorktreeCreateParams) (*WorkspaceInfo, *TabInfo, *PaneInfo, *WorktreeInfo, error) {
+	var out worktreeCreatedResult
+	if err := c.Call(ctx, "", MethodWorktreeCreate, params, &out); err != nil {
+		return nil, nil, nil, nil, err
+	}
+	return &out.Workspace, &out.Tab, &out.RootPane, &out.Worktree, nil
+}
+
+func (c *Client) OpenWorktree(ctx context.Context, params WorktreeOpenParams) (*WorkspaceInfo, *TabInfo, *PaneInfo, *WorktreeInfo, bool, error) {
+	var out worktreeOpenedResult
+	if err := c.Call(ctx, "", MethodWorktreeOpen, params, &out); err != nil {
+		return nil, nil, nil, nil, false, err
+	}
+	return &out.Workspace, &out.Tab, &out.RootPane, &out.Worktree, out.AlreadyOpen, nil
+}
+
+func (c *Client) RemoveWorktree(ctx context.Context, params WorktreeRemoveParams) (*WorktreeRemovedResult, error) {
+	var out WorktreeRemovedResult
+	if err := c.Call(ctx, "", MethodWorktreeRemove, params, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 func (c *Client) CreateTab(ctx context.Context, params TabCreateParams) (*TabInfo, *PaneInfo, error) {
@@ -169,6 +258,15 @@ func (c *Client) RenameTab(ctx context.Context, tabID, label string) (*TabInfo, 
 	return &out.Tab, nil
 }
 
+func (c *Client) MoveTab(ctx context.Context, tabID string, insertIndex int) ([]TabInfo, error) {
+	var out tabListResult
+	params := TabMoveParams{TabID: tabID, InsertIndex: insertIndex}
+	if err := c.Call(ctx, "", MethodTabMove, params, &out); err != nil {
+		return nil, err
+	}
+	return out.Tabs, nil
+}
+
 func (c *Client) CloseTab(ctx context.Context, tabID string) error {
 	return c.Call(ctx, "", MethodTabClose, TabTarget{TabID: tabID}, nil)
 }
@@ -184,6 +282,14 @@ func (c *Client) CurrentPane(ctx context.Context, callerPaneID *string) (*PaneIn
 func (c *Client) GetPane(ctx context.Context, paneID string) (*PaneInfo, error) {
 	var out paneInfoResult
 	if err := c.Call(ctx, "", MethodPaneGet, PaneTarget{PaneID: paneID}, &out); err != nil {
+		return nil, err
+	}
+	return &out.Pane, nil
+}
+
+func (c *Client) FocusPane(ctx context.Context, paneID string) (*PaneInfo, error) {
+	var out paneInfoResult
+	if err := c.Call(ctx, "", MethodPaneFocus, PaneTarget{PaneID: paneID}, &out); err != nil {
 		return nil, err
 	}
 	return &out.Pane, nil
@@ -219,6 +325,14 @@ func (c *Client) PaneLayout(ctx context.Context, paneID *string) (*PaneLayoutSna
 		PaneID *string `json:"pane_id,omitempty"`
 	}{PaneID: paneID}
 	if err := c.Call(ctx, "", MethodPaneLayout, params, &out); err != nil {
+		return nil, err
+	}
+	return &out.Layout, nil
+}
+
+func (c *Client) SetSplitRatio(ctx context.Context, params LayoutSetSplitRatioParams) (*LayoutDescription, error) {
+	var out layoutDescriptionResult
+	if err := c.Call(ctx, "", MethodLayoutSetSplitRatio, params, &out); err != nil {
 		return nil, err
 	}
 	return &out.Layout, nil

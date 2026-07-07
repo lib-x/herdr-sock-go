@@ -22,8 +22,17 @@ type Subscription map[string]any
 func SubscribeWorkspaceCreated() Subscription { return Subscription{"type": "workspace.created"} }
 func SubscribeWorkspaceUpdated() Subscription { return Subscription{"type": "workspace.updated"} }
 func SubscribeWorkspaceRenamed() Subscription { return Subscription{"type": "workspace.renamed"} }
+func SubscribeWorkspaceMoved() Subscription   { return Subscription{"type": "workspace.moved"} }
 func SubscribeWorkspaceClosed() Subscription  { return Subscription{"type": "workspace.closed"} }
 func SubscribeWorkspaceFocused() Subscription { return Subscription{"type": "workspace.focused"} }
+func SubscribeWorktreeCreated() Subscription  { return Subscription{"type": "worktree.created"} }
+func SubscribeWorktreeOpened() Subscription   { return Subscription{"type": "worktree.opened"} }
+func SubscribeWorktreeRemoved() Subscription  { return Subscription{"type": "worktree.removed"} }
+func SubscribeTabCreated() Subscription       { return Subscription{"type": "tab.created"} }
+func SubscribeTabClosed() Subscription        { return Subscription{"type": "tab.closed"} }
+func SubscribeTabFocused() Subscription       { return Subscription{"type": "tab.focused"} }
+func SubscribeTabRenamed() Subscription       { return Subscription{"type": "tab.renamed"} }
+func SubscribeTabMoved() Subscription         { return Subscription{"type": "tab.moved"} }
 func SubscribePaneCreated() Subscription      { return Subscription{"type": "pane.created"} }
 func SubscribePaneClosed() Subscription       { return Subscription{"type": "pane.closed"} }
 func SubscribePaneFocused() Subscription      { return Subscription{"type": "pane.focused"} }
@@ -32,6 +41,8 @@ func SubscribePaneExited() Subscription       { return Subscription{"type": "pan
 func SubscribePaneAgentDetected() Subscription {
 	return Subscription{"type": "pane.agent_detected"}
 }
+
+func SubscribeLayoutUpdated() Subscription { return Subscription{"type": "layout.updated"} }
 
 func SubscribePaneAgentStatusChanged(paneID string, status *AgentStatus) Subscription {
 	sub := Subscription{"type": "pane.agent_status_changed", "pane_id": paneID}
@@ -53,6 +64,10 @@ func SubscribePaneOutputMatched(paneID string, source ReadSource, match OutputMa
 		sub["lines"] = *lines
 	}
 	return sub
+}
+
+func SubscribePaneScrollChanged(paneID string) Subscription {
+	return Subscription{"type": "pane.scroll_changed", "pane_id": paneID}
 }
 
 type OutputMatch map[string]string
@@ -215,4 +230,102 @@ type PaneOutputMatchedEvent struct {
 	PaneID      string         `json:"pane_id"`
 	MatchedLine string         `json:"matched_line"`
 	Read        PaneReadResult `json:"read"`
+}
+
+type PaneScrollChangedEvent struct {
+	PaneID      string         `json:"pane_id"`
+	WorkspaceID string         `json:"workspace_id"`
+	Scroll      PaneScrollInfo `json:"scroll"`
+}
+
+type WorkspaceCreatedEvent struct {
+	Type      string        `json:"type"`
+	Workspace WorkspaceInfo `json:"workspace"`
+}
+
+type WorkspaceUpdatedEvent struct {
+	Type      string        `json:"type"`
+	Workspace WorkspaceInfo `json:"workspace"`
+}
+
+type WorkspaceRenamedEvent struct {
+	Type        string `json:"type"`
+	WorkspaceID string `json:"workspace_id"`
+	Label       string `json:"label"`
+}
+
+type WorkspaceMovedEvent struct {
+	Type        string          `json:"type"`
+	WorkspaceID string          `json:"workspace_id"`
+	InsertIndex int             `json:"insert_index"`
+	Workspaces  []WorkspaceInfo `json:"workspaces"`
+}
+
+type WorkspaceClosedEvent struct {
+	Type        string         `json:"type"`
+	WorkspaceID string         `json:"workspace_id"`
+	Workspace   *WorkspaceInfo `json:"workspace,omitempty"`
+}
+
+type WorkspaceFocusedEvent struct {
+	Type        string `json:"type"`
+	WorkspaceID string `json:"workspace_id"`
+}
+
+type WorktreeCreatedEvent struct {
+	Type      string        `json:"type"`
+	Workspace WorkspaceInfo `json:"workspace"`
+	Worktree  WorktreeInfo  `json:"worktree"`
+}
+
+type WorktreeOpenedEvent struct {
+	Type        string        `json:"type"`
+	Workspace   WorkspaceInfo `json:"workspace"`
+	Worktree    WorktreeInfo  `json:"worktree"`
+	AlreadyOpen bool          `json:"already_open"`
+}
+
+type WorktreeRemovedEvent struct {
+	Type        string         `json:"type"`
+	WorkspaceID string         `json:"workspace_id"`
+	Workspace   *WorkspaceInfo `json:"workspace,omitempty"`
+	Worktree    WorktreeInfo   `json:"worktree"`
+	Forced      bool           `json:"forced"`
+}
+
+type TabCreatedEvent struct {
+	Type string  `json:"type"`
+	Tab  TabInfo `json:"tab"`
+}
+
+type TabClosedEvent struct {
+	Type        string `json:"type"`
+	TabID       string `json:"tab_id"`
+	WorkspaceID string `json:"workspace_id"`
+}
+
+type TabFocusedEvent struct {
+	Type        string `json:"type"`
+	TabID       string `json:"tab_id"`
+	WorkspaceID string `json:"workspace_id"`
+}
+
+type TabRenamedEvent struct {
+	Type        string `json:"type"`
+	TabID       string `json:"tab_id"`
+	WorkspaceID string `json:"workspace_id"`
+	Label       string `json:"label"`
+}
+
+type TabMovedEvent struct {
+	Type        string    `json:"type"`
+	TabID       string    `json:"tab_id"`
+	WorkspaceID string    `json:"workspace_id"`
+	InsertIndex int       `json:"insert_index"`
+	Tabs        []TabInfo `json:"tabs"`
+}
+
+type LayoutUpdatedEvent struct {
+	Type   string             `json:"type"`
+	Layout PaneLayoutSnapshot `json:"layout"`
 }
