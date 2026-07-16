@@ -14,13 +14,14 @@ const (
 
 	MethodSessionSnapshot = "session.snapshot"
 
-	MethodWorkspaceCreate = "workspace.create"
-	MethodWorkspaceList   = "workspace.list"
-	MethodWorkspaceGet    = "workspace.get"
-	MethodWorkspaceFocus  = "workspace.focus"
-	MethodWorkspaceRename = "workspace.rename"
-	MethodWorkspaceMove   = "workspace.move"
-	MethodWorkspaceClose  = "workspace.close"
+	MethodWorkspaceCreate         = "workspace.create"
+	MethodWorkspaceList           = "workspace.list"
+	MethodWorkspaceGet            = "workspace.get"
+	MethodWorkspaceFocus          = "workspace.focus"
+	MethodWorkspaceRename         = "workspace.rename"
+	MethodWorkspaceMove           = "workspace.move"
+	MethodWorkspaceReportMetadata = "workspace.report_metadata"
+	MethodWorkspaceClose          = "workspace.close"
 
 	MethodWorktreeList   = "worktree.list"
 	MethodWorktreeCreate = "worktree.create"

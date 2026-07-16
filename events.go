@@ -21,6 +21,9 @@ type Subscription map[string]any
 
 func SubscribeWorkspaceCreated() Subscription { return Subscription{"type": "workspace.created"} }
 func SubscribeWorkspaceUpdated() Subscription { return Subscription{"type": "workspace.updated"} }
+func SubscribeWorkspaceMetadataUpdated() Subscription {
+	return Subscription{"type": "workspace.metadata_updated"}
+}
 func SubscribeWorkspaceRenamed() Subscription { return Subscription{"type": "workspace.renamed"} }
 func SubscribeWorkspaceMoved() Subscription   { return Subscription{"type": "workspace.moved"} }
 func SubscribeWorkspaceClosed() Subscription  { return Subscription{"type": "workspace.closed"} }
@@ -35,6 +38,7 @@ func SubscribeTabRenamed() Subscription       { return Subscription{"type": "tab
 func SubscribeTabMoved() Subscription         { return Subscription{"type": "tab.moved"} }
 func SubscribePaneCreated() Subscription      { return Subscription{"type": "pane.created"} }
 func SubscribePaneClosed() Subscription       { return Subscription{"type": "pane.closed"} }
+func SubscribePaneUpdated() Subscription      { return Subscription{"type": "pane.updated"} }
 func SubscribePaneFocused() Subscription      { return Subscription{"type": "pane.focused"} }
 func SubscribePaneMoved() Subscription        { return Subscription{"type": "pane.moved"} }
 func SubscribePaneExited() Subscription       { return Subscription{"type": "pane.exited"} }
@@ -216,10 +220,12 @@ func (s *EventStream) DecodeData(event *SubscriptionEvent, out any) error {
 }
 
 type PaneAgentStatusChangedEvent struct {
-	PaneID       string            `json:"pane_id"`
-	WorkspaceID  string            `json:"workspace_id"`
-	AgentStatus  AgentStatus       `json:"agent_status"`
-	Agent        *string           `json:"agent,omitempty"`
+	PaneID      string      `json:"pane_id"`
+	WorkspaceID string      `json:"workspace_id"`
+	AgentStatus AgentStatus `json:"agent_status"`
+	Agent       *string     `json:"agent,omitempty"`
+	// Deprecated: Herdr 0.7.4 no longer emits custom_status. Use AgentStatus,
+	// Title, DisplayAgent, and StateLabels instead.
 	CustomStatus *string           `json:"custom_status,omitempty"`
 	Title        *string           `json:"title,omitempty"`
 	DisplayAgent *string           `json:"display_agent,omitempty"`
@@ -244,6 +250,11 @@ type WorkspaceCreatedEvent struct {
 }
 
 type WorkspaceUpdatedEvent struct {
+	Type      string        `json:"type"`
+	Workspace WorkspaceInfo `json:"workspace"`
+}
+
+type WorkspaceMetadataUpdatedEvent struct {
 	Type      string        `json:"type"`
 	Workspace WorkspaceInfo `json:"workspace"`
 }
@@ -323,6 +334,11 @@ type TabMovedEvent struct {
 	WorkspaceID string    `json:"workspace_id"`
 	InsertIndex int       `json:"insert_index"`
 	Tabs        []TabInfo `json:"tabs"`
+}
+
+type PaneUpdatedEvent struct {
+	Type string   `json:"type"`
+	Pane PaneInfo `json:"pane"`
 }
 
 type LayoutUpdatedEvent struct {

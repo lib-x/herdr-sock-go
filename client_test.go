@@ -199,6 +199,7 @@ func TestWorktreeSubscriptionHelpers(t *testing.T) {
 		want string
 	}{
 		{name: "workspace moved", sub: SubscribeWorkspaceMoved(), want: "workspace.moved"},
+		{name: "workspace metadata updated", sub: SubscribeWorkspaceMetadataUpdated(), want: "workspace.metadata_updated"},
 		{name: "created", sub: SubscribeWorktreeCreated(), want: "worktree.created"},
 		{name: "opened", sub: SubscribeWorktreeOpened(), want: "worktree.opened"},
 		{name: "removed", sub: SubscribeWorktreeRemoved(), want: "worktree.removed"},
@@ -207,6 +208,7 @@ func TestWorktreeSubscriptionHelpers(t *testing.T) {
 		{name: "tab focused", sub: SubscribeTabFocused(), want: "tab.focused"},
 		{name: "tab renamed", sub: SubscribeTabRenamed(), want: "tab.renamed"},
 		{name: "tab moved", sub: SubscribeTabMoved(), want: "tab.moved"},
+		{name: "pane updated", sub: SubscribePaneUpdated(), want: "pane.updated"},
 		{name: "layout updated", sub: SubscribeLayoutUpdated(), want: "layout.updated"},
 		{name: "pane scroll changed", sub: SubscribePaneScrollChanged("w1:p1"), want: "pane.scroll_changed"},
 	}
@@ -218,6 +220,128 @@ func TestWorktreeSubscriptionHelpers(t *testing.T) {
 				t.Fatalf("subscription type = %#v, want %q", tt.sub["type"], tt.want)
 			}
 		})
+	}
+}
+
+func TestMetadataTokenPatchMarshalsSetAndClearValues(t *testing.T) {
+	value := "reviewing auth"
+	encoded, err := json.Marshal(PaneReportMetadataParams{
+		PaneID: "w1:p1",
+		Source: "test",
+		Tokens: map[string]*string{
+			"summary": &value,
+			"old":     nil,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(encoded, &payload); err != nil {
+		t.Fatal(err)
+	}
+	tokens, ok := payload["tokens"].(map[string]any)
+	if !ok || tokens["summary"] != value {
+		t.Fatalf("tokens = %#v", payload["tokens"])
+	}
+	if cleared, ok := tokens["old"]; !ok || cleared != nil {
+		t.Fatalf("cleared token = %#v, present = %v", cleared, ok)
+	}
+}
+
+func TestReportWorkspaceMetadata(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix socket test")
+	}
+	value := "2 changes"
+	socket := startUnixJSONServer(t, func(t *testing.T, request map[string]any, w *bufio.Writer) {
+		if request["method"] != MethodWorkspaceReportMetadata {
+			t.Fatalf("method = %v", request["method"])
+		}
+		params, ok := request["params"].(map[string]any)
+		if !ok || params["workspace_id"] != "w1" || params["source"] != "test" || params["ttl_ms"] != float64(5000) {
+			t.Fatalf("params = %#v", request["params"])
+		}
+		tokens, ok := params["tokens"].(map[string]any)
+		if !ok || tokens["summary"] != value || tokens["old"] != nil {
+			t.Fatalf("tokens = %#v", params["tokens"])
+		}
+		id, _ := request["id"].(string)
+		writeLine(t, w, `{"id":"`+id+`","result":{"type":"ok"}}`)
+	})
+
+	client := MustNew(WithSocketPath(socket), WithTimeout(time.Second))
+	ttl := uint64(5000)
+	if err := client.ReportWorkspaceMetadata(context.Background(), WorkspaceReportMetadataParams{
+		WorkspaceID: "w1",
+		Source:      "test",
+		Tokens: map[string]*string{
+			"summary": &value,
+			"old":     nil,
+		},
+		TTLMS: &ttl,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDecodeV074MetadataEvents(t *testing.T) {
+	workspaceLine := []byte(`{
+		"event":"workspace_metadata_updated",
+		"data":{
+			"type":"workspace_metadata_updated",
+			"workspace":{
+				"workspace_id":"w1",
+				"number":1,
+				"label":"repo",
+				"focused":true,
+				"pane_count":1,
+				"tab_count":1,
+				"active_tab_id":"w1:t1",
+				"agent_status":"working",
+				"tokens":{"summary":"done"}
+			}
+		}
+	}`)
+	var workspaceEnvelope SubscriptionEvent
+	if err := json.Unmarshal(workspaceLine, &workspaceEnvelope); err != nil {
+		t.Fatal(err)
+	}
+	var workspaceData WorkspaceMetadataUpdatedEvent
+	if err := json.Unmarshal(workspaceEnvelope.Data, &workspaceData); err != nil {
+		t.Fatal(err)
+	}
+	if workspaceData.Workspace.Tokens["summary"] != "done" {
+		t.Fatalf("workspace event = %#v", workspaceData)
+	}
+
+	paneLine := []byte(`{
+		"event":"pane_updated",
+		"data":{
+			"type":"pane_updated",
+			"pane":{
+				"pane_id":"w1:p1",
+				"terminal_id":"term-1",
+				"workspace_id":"w1",
+				"tab_id":"w1:t1",
+				"focused":true,
+				"terminal_title_stripped":"Codex",
+				"agent_status":"working",
+				"tokens":{"model":"gpt-5"},
+				"revision":2
+			}
+		}
+	}`)
+	var paneEnvelope SubscriptionEvent
+	if err := json.Unmarshal(paneLine, &paneEnvelope); err != nil {
+		t.Fatal(err)
+	}
+	var paneData PaneUpdatedEvent
+	if err := json.Unmarshal(paneEnvelope.Data, &paneData); err != nil {
+		t.Fatal(err)
+	}
+	if paneData.Pane.TerminalTitleStripped == nil || *paneData.Pane.TerminalTitleStripped != "Codex" || paneData.Pane.Tokens["model"] != "gpt-5" {
+		t.Fatalf("pane event = %#v", paneData)
 	}
 }
 

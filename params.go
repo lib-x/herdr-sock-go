@@ -21,6 +21,14 @@ type WorkspaceMoveParams struct {
 	InsertIndex int    `json:"insert_index"`
 }
 
+type WorkspaceReportMetadataParams struct {
+	WorkspaceID string             `json:"workspace_id"`
+	Source      string             `json:"source"`
+	Tokens      map[string]*string `json:"tokens"`
+	Seq         *uint64            `json:"seq,omitempty"`
+	TTLMS       *uint64            `json:"ttl_ms,omitempty"`
+}
+
 type WorktreeListParams struct {
 	WorkspaceID *string `json:"workspace_id,omitempty"`
 	CWD         *string `json:"cwd,omitempty"`
@@ -128,15 +136,17 @@ type PaneReadParams struct {
 }
 
 type PaneReportAgentParams struct {
-	PaneID           string         `json:"pane_id"`
-	Source           string         `json:"source"`
-	Agent            string         `json:"agent"`
-	State            PaneAgentState `json:"state"`
-	Message          *string        `json:"message,omitempty"`
-	CustomStatus     *string        `json:"custom_status,omitempty"`
-	Seq              *uint64        `json:"seq,omitempty"`
-	AgentSessionID   *string        `json:"agent_session_id,omitempty"`
-	AgentSessionPath *string        `json:"agent_session_path,omitempty"`
+	PaneID  string         `json:"pane_id"`
+	Source  string         `json:"source"`
+	Agent   string         `json:"agent"`
+	State   PaneAgentState `json:"state"`
+	Message *string        `json:"message,omitempty"`
+	// Deprecated: Herdr 0.7.4 no longer accepts custom_status. Use State and
+	// Message instead.
+	CustomStatus     *string `json:"custom_status,omitempty"`
+	Seq              *uint64 `json:"seq,omitempty"`
+	AgentSessionID   *string `json:"agent_session_id,omitempty"`
+	AgentSessionPath *string `json:"agent_session_path,omitempty"`
 }
 
 type PaneReportAgentSessionParams struct {
@@ -150,20 +160,24 @@ type PaneReportAgentSessionParams struct {
 }
 
 type PaneReportMetadataParams struct {
-	PaneID            string            `json:"pane_id"`
-	Source            string            `json:"source"`
-	Agent             *string           `json:"agent,omitempty"`
-	AppliesToSource   *string           `json:"applies_to_source,omitempty"`
-	Title             *string           `json:"title,omitempty"`
-	DisplayAgent      *string           `json:"display_agent,omitempty"`
-	CustomStatus      *string           `json:"custom_status,omitempty"`
-	StateLabels       map[string]string `json:"state_labels,omitempty"`
-	ClearTitle        bool              `json:"clear_title,omitempty"`
-	ClearDisplayAgent bool              `json:"clear_display_agent,omitempty"`
-	ClearCustomStatus bool              `json:"clear_custom_status,omitempty"`
-	ClearStateLabels  bool              `json:"clear_state_labels,omitempty"`
-	Seq               *uint64           `json:"seq,omitempty"`
-	TTLMS             *uint64           `json:"ttl_ms,omitempty"`
+	PaneID          string  `json:"pane_id"`
+	Source          string  `json:"source"`
+	Agent           *string `json:"agent,omitempty"`
+	AppliesToSource *string `json:"applies_to_source,omitempty"`
+	Title           *string `json:"title,omitempty"`
+	DisplayAgent    *string `json:"display_agent,omitempty"`
+	// Deprecated: Herdr 0.7.4 no longer accepts custom_status. Use Title,
+	// DisplayAgent, StateLabels, and Tokens instead.
+	CustomStatus      *string            `json:"custom_status,omitempty"`
+	StateLabels       map[string]string  `json:"state_labels,omitempty"`
+	Tokens            map[string]*string `json:"tokens,omitempty"`
+	ClearTitle        bool               `json:"clear_title,omitempty"`
+	ClearDisplayAgent bool               `json:"clear_display_agent,omitempty"`
+	// Deprecated: Herdr 0.7.4 no longer accepts clear_custom_status.
+	ClearCustomStatus bool    `json:"clear_custom_status,omitempty"`
+	ClearStateLabels  bool    `json:"clear_state_labels,omitempty"`
+	Seq               *uint64 `json:"seq,omitempty"`
+	TTLMS             *uint64 `json:"ttl_ms,omitempty"`
 }
 
 type PaneZoomMode string

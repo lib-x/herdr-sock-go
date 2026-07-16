@@ -182,6 +182,10 @@ func (c *Client) MoveWorkspace(ctx context.Context, workspaceID string, insertIn
 	return out.Workspaces, nil
 }
 
+func (c *Client) ReportWorkspaceMetadata(ctx context.Context, params WorkspaceReportMetadataParams) error {
+	return c.Call(ctx, "", MethodWorkspaceReportMetadata, params, nil)
+}
+
 func (c *Client) CloseWorkspace(ctx context.Context, workspaceID string) error {
 	return c.Call(ctx, "", MethodWorkspaceClose, WorkspaceTarget{WorkspaceID: workspaceID}, nil)
 }
