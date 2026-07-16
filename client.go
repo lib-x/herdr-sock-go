@@ -13,8 +13,12 @@ import (
 )
 
 const (
+	// CurrentHerdrVersion is the Herdr source version used to generate this
+	// package's typed JSON API surface.
+	CurrentHerdrVersion = "0.7.4"
+
 	// CurrentProtocol is the Herdr socket API protocol version in the
-	// Herdr 0.7.3 source used for this package.
+	// CurrentHerdrVersion source used for this package.
 	CurrentProtocol uint32 = 16
 
 	defaultTimeout = 30 * time.Second

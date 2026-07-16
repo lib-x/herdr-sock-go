@@ -78,6 +78,7 @@ type WorkspaceInfo struct {
 	TabCount    int                    `json:"tab_count"`
 	ActiveTabID string                 `json:"active_tab_id"`
 	AgentStatus AgentStatus            `json:"agent_status"`
+	Tokens      map[string]string      `json:"tokens,omitempty"`
 	Worktree    *WorkspaceWorktreeInfo `json:"worktree,omitempty"`
 }
 
@@ -107,23 +108,28 @@ type AgentSessionInfo struct {
 }
 
 type PaneInfo struct {
-	PaneID        string            `json:"pane_id"`
-	TerminalID    string            `json:"terminal_id"`
-	WorkspaceID   string            `json:"workspace_id"`
-	TabID         string            `json:"tab_id"`
-	Focused       bool              `json:"focused"`
-	CWD           *string           `json:"cwd,omitempty"`
-	ForegroundCWD *string           `json:"foreground_cwd,omitempty"`
-	Label         *string           `json:"label,omitempty"`
-	Agent         *string           `json:"agent,omitempty"`
-	Title         *string           `json:"title,omitempty"`
-	DisplayAgent  *string           `json:"display_agent,omitempty"`
-	AgentStatus   AgentStatus       `json:"agent_status"`
-	CustomStatus  *string           `json:"custom_status,omitempty"`
-	StateLabels   map[string]string `json:"state_labels,omitempty"`
-	AgentSession  *AgentSessionInfo `json:"agent_session,omitempty"`
-	Scroll        *PaneScrollInfo   `json:"scroll,omitempty"`
-	Revision      uint64            `json:"revision"`
+	PaneID                string      `json:"pane_id"`
+	TerminalID            string      `json:"terminal_id"`
+	WorkspaceID           string      `json:"workspace_id"`
+	TabID                 string      `json:"tab_id"`
+	Focused               bool        `json:"focused"`
+	CWD                   *string     `json:"cwd,omitempty"`
+	ForegroundCWD         *string     `json:"foreground_cwd,omitempty"`
+	Label                 *string     `json:"label,omitempty"`
+	Agent                 *string     `json:"agent,omitempty"`
+	Title                 *string     `json:"title,omitempty"`
+	TerminalTitle         *string     `json:"terminal_title,omitempty"`
+	TerminalTitleStripped *string     `json:"terminal_title_stripped,omitempty"`
+	DisplayAgent          *string     `json:"display_agent,omitempty"`
+	AgentStatus           AgentStatus `json:"agent_status"`
+	// Deprecated: Herdr 0.7.4 no longer emits custom_status. Use AgentStatus,
+	// Title, DisplayAgent, StateLabels, and Tokens instead.
+	CustomStatus *string           `json:"custom_status,omitempty"`
+	StateLabels  map[string]string `json:"state_labels,omitempty"`
+	Tokens       map[string]string `json:"tokens,omitempty"`
+	AgentSession *AgentSessionInfo `json:"agent_session,omitempty"`
+	Scroll       *PaneScrollInfo   `json:"scroll,omitempty"`
+	Revision     uint64            `json:"revision"`
 }
 
 type PaneScrollInfo struct {
@@ -133,23 +139,28 @@ type PaneScrollInfo struct {
 }
 
 type AgentInfo struct {
-	TerminalID             string            `json:"terminal_id"`
-	Name                   *string           `json:"name,omitempty"`
-	Agent                  *string           `json:"agent,omitempty"`
-	Title                  *string           `json:"title,omitempty"`
-	DisplayAgent           *string           `json:"display_agent,omitempty"`
-	AgentStatus            AgentStatus       `json:"agent_status"`
-	ScreenDetectionSkipped bool              `json:"screen_detection_skipped,omitempty"`
-	CustomStatus           *string           `json:"custom_status,omitempty"`
-	StateLabels            map[string]string `json:"state_labels,omitempty"`
-	AgentSession           *AgentSessionInfo `json:"agent_session,omitempty"`
-	WorkspaceID            string            `json:"workspace_id"`
-	TabID                  string            `json:"tab_id"`
-	PaneID                 string            `json:"pane_id"`
-	Focused                bool              `json:"focused"`
-	CWD                    *string           `json:"cwd,omitempty"`
-	ForegroundCWD          *string           `json:"foreground_cwd,omitempty"`
-	Revision               uint64            `json:"revision"`
+	TerminalID             string      `json:"terminal_id"`
+	Name                   *string     `json:"name,omitempty"`
+	Agent                  *string     `json:"agent,omitempty"`
+	Title                  *string     `json:"title,omitempty"`
+	TerminalTitle          *string     `json:"terminal_title,omitempty"`
+	TerminalTitleStripped  *string     `json:"terminal_title_stripped,omitempty"`
+	DisplayAgent           *string     `json:"display_agent,omitempty"`
+	AgentStatus            AgentStatus `json:"agent_status"`
+	ScreenDetectionSkipped bool        `json:"screen_detection_skipped,omitempty"`
+	// Deprecated: Herdr 0.7.4 no longer emits custom_status. Use AgentStatus,
+	// Title, DisplayAgent, StateLabels, and Tokens instead.
+	CustomStatus  *string           `json:"custom_status,omitempty"`
+	StateLabels   map[string]string `json:"state_labels,omitempty"`
+	Tokens        map[string]string `json:"tokens,omitempty"`
+	AgentSession  *AgentSessionInfo `json:"agent_session,omitempty"`
+	WorkspaceID   string            `json:"workspace_id"`
+	TabID         string            `json:"tab_id"`
+	PaneID        string            `json:"pane_id"`
+	Focused       bool              `json:"focused"`
+	CWD           *string           `json:"cwd,omitempty"`
+	ForegroundCWD *string           `json:"foreground_cwd,omitempty"`
+	Revision      uint64            `json:"revision"`
 }
 
 type PaneReadResult struct {
