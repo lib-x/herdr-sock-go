@@ -55,6 +55,9 @@ const (
 	MethodPaneSendKeys            = "pane.send_keys"
 	MethodPaneSendInput           = "pane.send_input"
 	MethodPaneRead                = "pane.read"
+	MethodPaneGraphicsSet         = "pane.graphics.set"
+	MethodPaneGraphicsClear       = "pane.graphics.clear"
+	MethodPaneGraphicsInfo        = "pane.graphics.info"
 	MethodPaneReportAgent         = "pane.report_agent"
 	MethodPaneReportAgentSession  = "pane.report_agent_session"
 	MethodPaneReportMetadata      = "pane.report_metadata"
@@ -62,6 +65,7 @@ const (
 	MethodPaneReleaseAgent        = "pane.release_agent"
 	MethodPaneClose               = "pane.close"
 	MethodPaneWaitForOutput       = "pane.wait_for_output"
+	MethodPopupClose              = "popup.close"
 
 	MethodLayoutExport        = "layout.export"
 	MethodLayoutApply         = "layout.apply"

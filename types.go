@@ -51,6 +51,24 @@ const (
 	ReadFormatANSI ReadFormat = "ansi"
 )
 
+type PaneGraphicsFormat string
+
+const (
+	PaneGraphicsPNG  PaneGraphicsFormat = "png"
+	PaneGraphicsRGB  PaneGraphicsFormat = "rgb"
+	PaneGraphicsRGBA PaneGraphicsFormat = "rgba"
+)
+
+type PluginPanePlacement string
+
+const (
+	PluginPaneOverlay PluginPanePlacement = "overlay"
+	PluginPanePopup   PluginPanePlacement = "popup"
+	PluginPaneSplit   PluginPanePlacement = "split"
+	PluginPaneTab     PluginPanePlacement = "tab"
+	PluginPaneZoomed  PluginPanePlacement = "zoomed"
+)
+
 type PongResult struct {
 	Type         string              `json:"type"`
 	Version      string              `json:"version"`
@@ -136,6 +154,17 @@ type PaneScrollInfo struct {
 	OffsetFromBottom    uint64 `json:"offset_from_bottom"`
 	MaxOffsetFromBottom uint64 `json:"max_offset_from_bottom"`
 	ViewportRows        uint64 `json:"viewport_rows"`
+}
+
+type PaneGraphicsInfo struct {
+	CellWidthPX  uint32 `json:"cell_width_px"`
+	CellHeightPX uint32 `json:"cell_height_px"`
+}
+
+type PluginPaneInfo struct {
+	PluginID   string   `json:"plugin_id"`
+	Entrypoint string   `json:"entrypoint"`
+	Pane       PaneInfo `json:"pane"`
 }
 
 type AgentInfo struct {

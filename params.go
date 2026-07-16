@@ -135,6 +135,22 @@ type PaneReadParams struct {
 	StripANSI *bool      `json:"strip_ansi,omitempty"`
 }
 
+type PaneGraphicsPlacementParams struct {
+	ViewportCol int32  `json:"viewport_col,omitempty"`
+	ViewportRow int32  `json:"viewport_row,omitempty"`
+	GridCols    uint32 `json:"grid_cols,omitempty"`
+	GridRows    uint32 `json:"grid_rows,omitempty"`
+}
+
+type PaneGraphicsSetParams struct {
+	PaneID      string                       `json:"pane_id"`
+	Format      PaneGraphicsFormat           `json:"format"`
+	ImageWidth  uint32                       `json:"image_width"`
+	ImageHeight uint32                       `json:"image_height"`
+	DataBase64  string                       `json:"data_base64,omitempty"`
+	Placement   *PaneGraphicsPlacementParams `json:"placement,omitempty"`
+}
+
 type PaneReportAgentParams struct {
 	PaneID  string         `json:"pane_id"`
 	Source  string         `json:"source"`
@@ -233,4 +249,26 @@ type NotificationShowParams struct {
 	Body     *string               `json:"body,omitempty"`
 	Position *string               `json:"position,omitempty"`
 	Sound    NotificationShowSound `json:"sound,omitempty"`
+}
+
+type PluginPaneOpenParams struct {
+	PluginID     string               `json:"plugin_id"`
+	Entrypoint   string               `json:"entrypoint"`
+	Placement    *PluginPanePlacement `json:"placement,omitempty"`
+	Width        *PopupSize           `json:"width,omitempty"`
+	Height       *PopupSize           `json:"height,omitempty"`
+	WorkspaceID  *string              `json:"workspace_id,omitempty"`
+	TargetPaneID *string              `json:"target_pane_id,omitempty"`
+	Direction    *SplitDirection      `json:"direction,omitempty"`
+	CWD          *string              `json:"cwd,omitempty"`
+	Focus        bool                 `json:"focus,omitempty"`
+	Env          map[string]string    `json:"env,omitempty"`
+}
+
+type PluginPaneFocusParams struct {
+	PaneID string `json:"pane_id"`
+}
+
+type PluginPaneCloseParams struct {
+	PaneID string `json:"pane_id"`
 }

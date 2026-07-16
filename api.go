@@ -85,6 +85,12 @@ type paneReadResult struct {
 	Read PaneReadResult `json:"read"`
 }
 
+type paneGraphicsInfoResult struct {
+	Type         string `json:"type"`
+	CellWidthPX  uint32 `json:"cell_width_px"`
+	CellHeightPX uint32 `json:"cell_height_px"`
+}
+
 type paneLayoutResult struct {
 	Type   string             `json:"type"`
 	Layout PaneLayoutSnapshot `json:"layout"`
@@ -120,6 +126,11 @@ type NotificationShowResult struct {
 type sessionSnapshotResult struct {
 	Type     string          `json:"type"`
 	Snapshot SessionSnapshot `json:"snapshot"`
+}
+
+type pluginPaneResult struct {
+	Type       string         `json:"type"`
+	PluginPane PluginPaneInfo `json:"plugin_pane"`
 }
 
 func (c *Client) SessionSnapshot(ctx context.Context) (*SessionSnapshot, error) {
@@ -373,6 +384,25 @@ func (c *Client) ReadPane(ctx context.Context, params PaneReadParams) (*PaneRead
 	return &out.Read, nil
 }
 
+func (c *Client) SetPaneGraphics(ctx context.Context, params PaneGraphicsSetParams) error {
+	return c.Call(ctx, "", MethodPaneGraphicsSet, params, nil)
+}
+
+func (c *Client) ClearPaneGraphics(ctx context.Context, paneID string) error {
+	return c.Call(ctx, "", MethodPaneGraphicsClear, PaneTarget{PaneID: paneID}, nil)
+}
+
+func (c *Client) GetPaneGraphicsInfo(ctx context.Context, paneID string) (*PaneGraphicsInfo, error) {
+	var out paneGraphicsInfoResult
+	if err := c.Call(ctx, "", MethodPaneGraphicsInfo, PaneTarget{PaneID: paneID}, &out); err != nil {
+		return nil, err
+	}
+	return &PaneGraphicsInfo{
+		CellWidthPX:  out.CellWidthPX,
+		CellHeightPX: out.CellHeightPX,
+	}, nil
+}
+
 func (c *Client) ReportAgent(ctx context.Context, params PaneReportAgentParams) error {
 	return c.Call(ctx, "", MethodPaneReportAgent, params, nil)
 }
@@ -419,4 +449,28 @@ func (c *Client) ShowNotification(ctx context.Context, params NotificationShowPa
 		return nil, err
 	}
 	return &out, nil
+}
+
+func (c *Client) OpenPluginPane(ctx context.Context, params PluginPaneOpenParams) (*PluginPaneInfo, error) {
+	var out pluginPaneResult
+	if err := c.Call(ctx, "", MethodPluginPaneOpen, params, &out); err != nil {
+		return nil, err
+	}
+	return &out.PluginPane, nil
+}
+
+func (c *Client) FocusPluginPane(ctx context.Context, paneID string) (*PluginPaneInfo, error) {
+	var out pluginPaneResult
+	if err := c.Call(ctx, "", MethodPluginPaneFocus, PluginPaneFocusParams{PaneID: paneID}, &out); err != nil {
+		return nil, err
+	}
+	return &out.PluginPane, nil
+}
+
+func (c *Client) ClosePluginPane(ctx context.Context, paneID string) error {
+	return c.Call(ctx, "", MethodPluginPaneClose, PluginPaneCloseParams{PaneID: paneID}, nil)
+}
+
+func (c *Client) ClosePopup(ctx context.Context) error {
+	return c.Call(ctx, "", MethodPopupClose, EmptyParams{}, nil)
 }
